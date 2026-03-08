@@ -1,0 +1,2 @@
+# YOLO12_Small_Target_Ship_Detection
+基于yolo12船舶小目标检测的算法研究
