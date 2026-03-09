@@ -28,8 +28,8 @@ def main():
         data=DATASET_YAML,       
         epochs=150,               
         imgsz=IMG_SIZE,           # 统一使用 config 中的图片大小
-        batch=16,                 
-        workers=4,                
+        batch=10,                 
+        workers=8,                
         device=0,                 
 
         # 优化器与策略 
