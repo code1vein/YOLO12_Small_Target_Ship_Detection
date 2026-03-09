@@ -6,6 +6,10 @@ from pathlib import Path
 # 项目根目录
 PROJECT_ROOT = Path(__file__).resolve().parent
 
+#消融实验模型目录
+MODEL_ROOT = PROJECT_ROOT / "models"
+ABLATION_MODEL_DIR = MODEL_ROOT / "ablation"
+
 # 数据集大目录
 DATASET_ROOT = PROJECT_ROOT / "dataset"
 
@@ -21,6 +25,7 @@ ORIGINAL_LABELS_2CLASS_DIR = DATA_ORIGINAL_DIR / "labels_2class" # 转换后的2
 
 # YAML 配置文件路径配置
 BASELINE_YAML_PATH = DATA_BASELINE_DIR / "ship_dataset.yaml"
+AUGMENTATION_YAML_PATH = DATA_AUGMENTATION_DIR / "ship_dataset.yaml"
 
 
 
@@ -29,11 +34,22 @@ BASELINE_YAML_PATH = DATA_BASELINE_DIR / "ship_dataset.yaml"
 # 模型与训练配置
 
 # 预训练权重选择
-PRETRAINED_MODEL = "yolo12m.pt"
+YOLO12_MODEL = "yolo12m.pt"
+YOLO11_MODEL = "yolo11m.pt"
+YOLO8_MODEL = "yolov8m.pt"
+YOLO5_MODEL = "yolov5mu.pt"  
+PRETRAINED_MODEL = YOLO12_MODEL
 
 # 训练输出根目录
 RUNS_DIR = PROJECT_ROOT / "runs"
 TRAIN_RUNS_DIR = RUNS_DIR / "train"
+
+# YOLOv12 消融实验模型配置
+YOLO12_ABLATION_M1_P2_CFG = ABLATION_MODEL_DIR / "yolo12m_m1_p2.yaml"
+YOLO12_ABLATION_M2_SPD_CFG = ABLATION_MODEL_DIR / "yolo12m_m2_spd.yaml"
+YOLO12_ABLATION_M3_NECK_CFG = ABLATION_MODEL_DIR / "yolo12m_m3_neck.yaml"
+YOLO12_ABLATION_M4_P2_SPD_CFG = ABLATION_MODEL_DIR / "yolo12m_m4_p2_spd.yaml"
+YOLO12_ABLATION_M5_P2_SPD_NECK_CFG = ABLATION_MODEL_DIR / "yolo12m_m5_p2_spd_neck.yaml"
 
 # 小目标划分的相对面积占比阈值0.5%
 SMALL_TARGET_THRESHOLD = 0.005
