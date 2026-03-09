@@ -29,7 +29,7 @@ BASELINE_YAML_PATH = DATA_BASELINE_DIR / "ship_dataset.yaml"
 # 模型与训练配置
 
 # 预训练权重选择
-PRETRAINED_MODEL = "yolov12s.pt"
+PRETRAINED_MODEL = "yolo12m.pt"
 
 # 训练输出根目录
 RUNS_DIR = PROJECT_ROOT / "runs"
