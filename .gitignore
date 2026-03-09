@@ -3,14 +3,4 @@ __pycache__/
 .qoder/
 dataset/
 .vscode/
-
-# Weights
 *.pt
-*.pth
-*.weights
-*.onnx
-*.engine
-*.pb
-*.tflite
-runs/*/weights/
-runs/**/weights/
