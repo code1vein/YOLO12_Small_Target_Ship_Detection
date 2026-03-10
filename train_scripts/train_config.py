@@ -1,4 +1,6 @@
 import sys
+import csv
+import json
 from pathlib import Path
 
 from ultralytics import YOLO
@@ -6,6 +8,74 @@ from ultralytics import YOLO
 # 动态加载根目录的统一配置
 sys.path.append(str(Path(__file__).resolve().parent.parent))
 from config import IMG_SIZE, PROJECT_ROOT, RUNS_DIR
+
+# 从ultralytics的返回值中提取GFLOPs
+def _extract_flops_g(info_ret):
+    if isinstance(info_ret, (tuple, list)):
+        for v in reversed(info_ret):
+            if isinstance(v, (int, float)):
+                return float(v)
+    if isinstance(info_ret, dict):
+        for k in ["flops", "GFLOPs", "gflops"]:
+            if k in info_ret and isinstance(info_ret[k], (int, float)):
+                return float(info_ret[k])
+    return None
+
+# 训练结束后保存 Params/FLOPs
+def _save_complexity_report(output_dir: Path, run_name: str, dataset_desc: str):
+    best_path = output_dir / "weights" / "best.pt"
+    if not best_path.exists():
+        print(f"[!] 未找到 best.pt，跳过复杂度统计：{best_path}")
+        return
+
+    model = YOLO(str(best_path))
+    params = sum(p.numel() for p in model.model.parameters())
+    params_m = params / 1e6
+
+    flops_g = None
+    try:
+        info_ret = model.info(imgsz=IMG_SIZE, verbose=False)
+        flops_g = _extract_flops_g(info_ret)
+    except Exception as e:
+        print(f"[!] 计算 FLOPs 失败：{e}")
+
+    report = {
+        "run_name": run_name,
+        "dataset_desc": dataset_desc,
+        "best_weight": str(best_path),
+        "imgsz": IMG_SIZE,
+        "params": params,
+        "params_m": round(params_m, 4),
+        "flops_g": round(flops_g, 4) if flops_g is not None else None,
+    }
+
+    per_run_report = output_dir / "model_complexity.json"
+    with open(per_run_report, "w", encoding="utf-8") as f:
+        json.dump(report, f, ensure_ascii=False, indent=2)
+
+    summary_csv = RUNS_DIR / "train" / "experiment_complexity_records.csv"
+    summary_csv.parent.mkdir(parents=True, exist_ok=True)
+
+    need_header = not summary_csv.exists()
+    with open(summary_csv, "a", encoding="utf-8", newline="") as f:
+        writer = csv.writer(f)
+        if need_header:
+            writer.writerow([
+                "run_name", "dataset_desc", "best_weight", "imgsz",
+                "params", "params_m", "flops_g",
+            ])
+        writer.writerow([
+            run_name,
+            dataset_desc,
+            str(best_path),
+            IMG_SIZE,
+            params,
+            round(params_m, 4),
+            round(flops_g, 4) if flops_g is not None else "",
+        ])
+
+    print(f"[*] Params/FLOPs 已保存：{per_run_report}")
+    print(f"[*] Params/FLOPs 总表追加：{summary_csv}")
 
 
 def resolve_model_source(model_name):
@@ -67,6 +137,8 @@ def train_model(dataset_yaml, model_name, run_name, dataset_desc, model_cfg=None
         hsv_s=0.3,                           # 饱和度扰动幅度
         hsv_v=0.2,                           # 亮度扰动幅度
     )
+
+    _save_complexity_report(output_dir, run_name, dataset_desc)
 
     print(f"[*] {dataset_desc}训练完成")
     print(f"[*] 模型权重 '{output_dir / 'weights' / 'best.pt'}'")
