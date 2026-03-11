@@ -33,7 +33,7 @@ yolo12/
 │  ├─ convert_labels_to_2class.py   # 原始标签转二分类标签
 │  ├─ rename_dataset.py             # 数据语义化重命名
 │  ├─ split_dataset.py              # 数据集划分脚本
-│  ├─ augmentation/
+│  └─ augmentation/
 │     ├─ build_augmentation_dataset.py  #创建增强数据集总脚本
 │     ├─ weather_simulation.py          #天气增强脚本
 │     ├─ copypaste_data.py              #copy-paste增强脚本
@@ -102,7 +102,9 @@ pip install -r requirements.txt
 
 ### 3. 数据集准备（可选）
 我已提供划分好的基线数据集和增强数据集可直接使用
+
 链接：
+
 若想要体验完整的数据集准备过程可以进行下述操作
 
 将原始 iShip-1 数据放入 dataset/dataset_original 后，按以下顺序执行：
@@ -123,7 +125,9 @@ python dataset/augmentation/build_augmentation_dataset.py
 
 ### 4. 模型训练（可选）
 我已提供训练好的各消融实验的模型权重可直接使用
+
 链接：
+
 若想要体验完整的模型训练过程可以进行下述操作
 
 重要！训练前请将数据集中的ship_dataset.yaml中的数据集路径改为你自己的路径!
