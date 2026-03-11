@@ -1,7 +1,8 @@
 毕设工作记录.md
 __pycache__/
 .qoder/
-dataset/
+dataset/dataset*
+dataset/aigc_image
 .vscode/
 *.pt
 runs/detect_output/
