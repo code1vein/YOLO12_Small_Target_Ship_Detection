@@ -203,14 +203,14 @@ app.py 提供了一个面向展示和测试的 Gradio 前端
 
 - Ultralytics YOLO12
 - Official Docs: https://docs.ultralytics.com/models/yolo12/
-@article{tian2025yolo12,
+- @article{tian2025yolo12,
   title={YOLO12: Attention-Centric Real-Time Object Detectors},
   author={Tian, Yunjie and Ye, Qixiang and Doermann, David},
   journal={arXiv preprint arXiv:2502.12524},
   year={2025}
 }
 
-@software{yolo12,
+- @software{yolo12,
   author = {Tian, Yunjie and Ye, Qixiang and Doermann, David},
   title = {YOLO12: Attention-Centric Real-Time Object Detectors},
   year = {2025},
@@ -221,7 +221,7 @@ app.py 提供了一个面向展示和测试的 Gradio 前端
 ### iShip-1 数据集
 
 - iShip-1 Ship Detection Dataset
-@InProceedings{Li_2024_ACCV,
+- @InProceedings{Li_2024_ACCV,
 author = {Li, Lingya and Hou, Zhixing and Ma, Ming and Xiang, Jing and Yuan, Chuangxin and Xia, Guihua},
 title = {Spotlight on Small-scale Ship Detection: Empowering YOLO with Advanced Techniques and a Novel Dataset},
 booktitle = {Proceedings of the Asian Conference on Computer Vision (ACCV)},
