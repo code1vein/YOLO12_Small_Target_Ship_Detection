@@ -8,7 +8,12 @@ from train_config import train_model
 
 
 def main():
-    train_model(AUGMENTATION_YAML_PATH, YOLO8_MODEL, 'exp3_yolov8_augmentation', '增强数据集')
+    train_model(
+        AUGMENTATION_YAML_PATH,
+        YOLO8_MODEL,
+        'exp8_yolov8_augmentation',
+        'YOLOv8 增强数据集对比实验组',
+    )
 
 
 if __name__ == '__main__':

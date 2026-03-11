@@ -3,6 +3,7 @@ __pycache__/
 .qoder/
 dataset/dataset*
 dataset/aigc_image
+dataset/augmentation/generate_aigc_img2img.py
 .vscode/
 *.pt
 runs/detect_output/
