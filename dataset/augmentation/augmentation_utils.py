@@ -2,10 +2,46 @@ import shutil
 from pathlib import Path
 
 
-def init_augmentation_pool(src_dir: Path, dst_dir: Path) -> None:
+def should_skip_generated_file(file_stem: str, excluded_suffixes: tuple[str, ...]) -> bool:
+    return any(file_stem.endswith(suffix) for suffix in excluded_suffixes)
+
+
+def init_augmentation_pool(
+    src_dir: Path,
+    dst_dir: Path,
+    excluded_suffixes: tuple[str, ...] = (),
+) -> None:
     if not dst_dir.exists():
         print(f"首次运行，正在从 {src_dir.name} 初始化增强数据池 {dst_dir.name}...")
-        shutil.copytree(src_dir, dst_dir)
+
+        if not excluded_suffixes:
+            shutil.copytree(src_dir, dst_dir)
+        else:
+            for folder in ["images", "labels"]:
+                for split_name in ["train", "val", "test"]:
+                    (dst_dir / folder / split_name).mkdir(parents=True, exist_ok=True)
+
+            for split_name in ["train", "val", "test"]:
+                src_image_dir = src_dir / "images" / split_name
+                src_label_dir = src_dir / "labels" / split_name
+                dst_image_dir = dst_dir / "images" / split_name
+                dst_label_dir = dst_dir / "labels" / split_name
+
+                if src_image_dir.exists():
+                    for image_path in src_image_dir.iterdir():
+                        if not image_path.is_file() or should_skip_generated_file(image_path.stem, excluded_suffixes):
+                            continue
+                        shutil.copy2(image_path, dst_image_dir / image_path.name)
+
+                if src_label_dir.exists():
+                    for label_path in src_label_dir.glob("*.txt"):
+                        if should_skip_generated_file(label_path.stem, excluded_suffixes):
+                            continue
+                        shutil.copy2(label_path, dst_label_dir / label_path.name)
+
+            yaml_path = src_dir / "ship_dataset.yaml"
+            if yaml_path.exists():
+                shutil.copy2(yaml_path, dst_dir / "ship_dataset.yaml")
 
         # 初始化后同步修正 yaml 中的数据集路径配置
         yaml_path = dst_dir / "ship_dataset.yaml"
@@ -19,6 +55,20 @@ def init_augmentation_pool(src_dir: Path, dst_dir: Path) -> None:
         print("增强数据池初始化完毕\n")
     else:
         print(f"检测到增强数据池已存在，将在现有的 {dst_dir.name} 上执行受控增量更新")
+
+
+def count_dataset_images(dataset_dir: Path, excluded_suffixes: tuple[str, ...] = ()) -> int:
+    total = 0
+    for split_name in ["train", "val", "test"]:
+        image_dir = dataset_dir / "images" / split_name
+        if not image_dir.exists():
+            continue
+        total += sum(
+            1
+            for path in image_dir.iterdir()
+            if path.is_file() and not should_skip_generated_file(path.stem, excluded_suffixes)
+        )
+    return total
 
 
 def remove_generated_variants(image_dir: Path, label_dir: Path, suffix: str) -> int:

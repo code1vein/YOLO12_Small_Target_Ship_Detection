@@ -20,6 +20,7 @@ from dataset.augmentation.augmentation_utils import (
     init_augmentation_pool,
     load_label_lines,
     remove_generated_variants,
+    should_skip_generated_file,
     summarize_ratio,
 )
 
@@ -43,7 +44,9 @@ def extract_small_ships_catalog(train_img_dir, train_lbl_dir):
     """提取所有类别为小目标的候选框信息"""
     catalog = []
     print("正在扫描基线数据集，构建小目标候选库")
-    for lbl_path in train_lbl_dir.glob("*.txt"):
+    for lbl_path in sorted(train_lbl_dir.glob("*.txt"), key=lambda path: path.name):
+        if should_skip_generated_file(lbl_path.stem, ("_aug_noise",)):
+            continue
         with open(lbl_path, "r", encoding="utf-8") as f:
             lines = f.readlines()
         for line in lines:
@@ -154,7 +157,12 @@ def prepare_donor_patch(donor_img, donor_bbox, target_img_shape):
     mask = create_soft_mask(scaled_patch_h, scaled_patch_w, scaled_box)
     return patch, mask, scaled_box
 
-def create_copypaste_dataset(augment_ratio=0.15, max_paste=2, target_small_ratio=COPYPASTE_TARGET_SMALL_RATIO):
+def create_copypaste_dataset(
+    augment_ratio=0.15,
+    max_paste=2,
+    target_small_ratio=COPYPASTE_TARGET_SMALL_RATIO,
+    max_samples: int | None = None,
+):
     #基于 baseline 原图做 Copy-Paste，通过分布和质量约束抑制脏样本
     src_dir = DATA_BASELINE_DIR
     dst_dir = DATA_AUGMENTATION_DIR
@@ -163,7 +171,7 @@ def create_copypaste_dataset(augment_ratio=0.15, max_paste=2, target_small_ratio
         print(f"错误: 找不到基线数据集 {src_dir}")
         return
         
-    init_augmentation_pool(src_dir, dst_dir)
+    init_augmentation_pool(src_dir, dst_dir, excluded_suffixes=("_aug_noise",))
     print(f"启动 Copy-Paste 流水线，目标池{dst_dir}")
     
     src_train_img = src_dir / "images" / "train"
@@ -183,12 +191,22 @@ def create_copypaste_dataset(augment_ratio=0.15, max_paste=2, target_small_ratio
     small_ships_catalog = extract_small_ships_catalog(src_train_img, src_train_lbl)
     
     aug_count = 0
-    train_images = sorted(src_train_img.glob("*.jpg"))
+    train_images = sorted(
+        img_path
+        for img_path in src_train_img.glob("*.jpg")
+        if not should_skip_generated_file(img_path.stem, ("_aug_noise",))
+    )
+    if max_samples is not None:
+        target_aug_count = min(max_samples, len(train_images))
+    else:
+        target_aug_count = int(round(len(train_images) * augment_ratio))
+    target_aug_count = min(target_aug_count, len(train_images))
+    selected_images = set(random.sample(train_images, target_aug_count)) if target_aug_count > 0 else set()
     
     for img_path in tqdm(train_images, desc="执行抠图与重混 (Copy-Paste)"):
         lbl_path = src_train_lbl / (img_path.stem + ".txt")
             
-        if random.random() < augment_ratio and len(small_ships_catalog) > 0:
+        if img_path in selected_images and len(small_ships_catalog) > 0:
             base_img = cv2.imread(str(img_path))
             if base_img is None:
                 continue
@@ -281,6 +299,8 @@ def create_copypaste_dataset(augment_ratio=0.15, max_paste=2, target_small_ratio
                 aug_count += 1
                 current_normal += base_normal_count
                 current_small += base_small_count + success_paste
+                if aug_count >= target_aug_count:
+                    break
                 
     print("\n" + "="*50)
     print("Copy-Paste数据增强完成")

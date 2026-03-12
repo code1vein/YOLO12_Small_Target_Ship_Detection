@@ -2,6 +2,7 @@ import os
 import sys
 import json
 import shutil
+import random
 from pathlib import Path
 
 # 添加项目根目录到运行路径
@@ -111,7 +112,7 @@ def convert_labelme_to_yolo(json_path, img_width, img_height):
     }
 
 # 主执行流：匹配、重命名并整合到集大成池
-def main():
+def main(max_samples: int | None = None, seed: int = 42):
     init_augmentation_pool(DATA_BASELINE_DIR, DATA_AUGMENTATION_DIR)
 
     # 所有 AIGC 样本统一落到增强训练集的 train 子集
@@ -124,10 +125,14 @@ def main():
     if removed_count:
         print(f"[*] 已清理历史 AIGC 样本 {removed_count} 张，避免重复叠加")
 
-    json_files = list(AIGC_LABELS_DIR.glob("*.json"))
+    json_files = sorted(AIGC_LABELS_DIR.glob("*.json"), key=lambda path: path.name)
     if not json_files:
         print(f"[-] 在 {AIGC_LABELS_DIR} 目录下没有找到 json 标注文件")
         return
+
+    random.Random(seed).shuffle(json_files)
+    if max_samples is not None:
+        json_files = json_files[:max_samples]
 
     print(f"[*] 发现 {len(json_files)} 个 JSON 标注文件，准备进行转换和合并")
 

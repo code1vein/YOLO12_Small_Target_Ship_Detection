@@ -2,7 +2,118 @@ import os
 import shutil
 import random
 from pathlib import Path
+
+import cv2
+import albumentations as A
 from tqdm import tqdm
+
+
+VALID_EXTENSIONS = {'.jpg', '.jpeg', '.png', '.bmp'}
+
+
+def load_label_lines(label_path: Path) -> list[str]:
+    with open(label_path, 'r', encoding='utf-8') as file:
+        return [line.strip() for line in file if line.strip()]
+
+
+def label_has_small_target(label_path: Path) -> bool:
+    for line in load_label_lines(label_path):
+        parts = line.split()
+        if len(parts) != 5:
+            continue
+        if int(float(parts[0])) == 1:
+            return True
+    return False
+
+
+def select_balanced_subset(
+    image_names: list[str],
+    src_labels_dir: Path,
+    target_total: int,
+    target_small_ratio: float,
+) -> list[str]:
+    has_small = []
+    only_normal = []
+
+    for img_name in image_names:
+        label_path = src_labels_dir / f"{Path(img_name).stem}.txt"
+        if label_has_small_target(label_path):
+            has_small.append(img_name)
+        else:
+            only_normal.append(img_name)
+
+    capped_target_total = min(target_total, len(image_names))
+    target_small_count = min(len(has_small), int(round(capped_target_total * target_small_ratio)))
+    selected_small = random.sample(has_small, target_small_count) if len(has_small) > target_small_count else list(has_small)
+
+    remaining = capped_target_total - len(selected_small)
+    target_normal_count = min(len(only_normal), remaining)
+    selected_normal = random.sample(only_normal, target_normal_count) if len(only_normal) > target_normal_count else list(only_normal)
+
+    selected = selected_small + selected_normal
+    if len(selected) < capped_target_total:
+        leftovers = [name for name in image_names if name not in set(selected)]
+        needed = capped_target_total - len(selected)
+        if leftovers:
+            selected.extend(random.sample(leftovers, min(needed, len(leftovers))))
+
+    random.shuffle(selected)
+    return selected
+
+
+def add_noise_augmented_train_samples(
+    output_dir: Path,
+    source_label_dir: Path,
+    train_files: list[str],
+    noise_ratio: float,
+    max_noise_images: int,
+) -> int:
+    train_image_dir = output_dir / 'images' / 'train'
+    train_label_dir = output_dir / 'labels' / 'train'
+
+    small_first = []
+    normal_only = []
+    for img_name in train_files:
+        label_path = source_label_dir / f"{Path(img_name).stem}.txt"
+        if label_has_small_target(label_path):
+            small_first.append(img_name)
+        else:
+            normal_only.append(img_name)
+
+    target_noise_count = min(max_noise_images, int(round(len(train_files) * noise_ratio)))
+    candidate_files = small_first + normal_only
+    target_noise_count = min(target_noise_count, len(candidate_files))
+    if target_noise_count <= 0:
+        return 0
+
+    selected_for_noise = candidate_files[:target_noise_count]
+    noise_transform = A.Compose([
+        A.OneOf([
+            A.GaussNoise(std_range=(0.02, 0.06), mean_range=(0.0, 0.0), p=1.0),
+            A.ISONoise(color_shift=(0.01, 0.05), intensity=(0.1, 0.4), p=1.0),
+            A.MultiplicativeNoise(multiplier=(0.92, 1.08), elementwise=True, p=1.0),
+        ], p=1.0)
+    ])
+
+    generated_count = 0
+    for img_name in tqdm(selected_for_noise, desc='生成 baseline 噪声样本'):
+        image_path = train_image_dir / img_name
+        label_path = train_label_dir / f"{Path(img_name).stem}.txt"
+        image = cv2.imread(str(image_path))
+        if image is None or not label_path.exists():
+            continue
+
+        rgb_image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+        noise_image = noise_transform(image=rgb_image)["image"]
+        output_image = cv2.cvtColor(noise_image, cv2.COLOR_RGB2BGR)
+
+        noise_image_name = f"{Path(img_name).stem}_aug_noise{Path(img_name).suffix}"
+        noise_label_name = f"{Path(img_name).stem}_aug_noise.txt"
+        cv2.imwrite(str(train_image_dir / noise_image_name), output_image)
+        shutil.copy2(label_path, train_label_dir / noise_label_name)
+        generated_count += 1
+
+    return generated_count
 
 def split_dataset(
     dataset_dir: str, 
@@ -10,7 +121,11 @@ def split_dataset(
     labels_dir_name: str = "labels_2class",
     output_dir_name: str = "yolo_dataset",
     ratios: tuple = (0.7, 0.2, 0.1),
-    seed: int = 42
+    seed: int = 42,
+    target_total_images: int | None = None,
+    target_small_image_ratio: float = 0.5,
+    noise_ratio: float = 0.0,
+    max_noise_images: int = 0,
 ):
     """
     将数据集划分为 train, val, test 集 （7:2:1）
@@ -26,12 +141,11 @@ def split_dataset(
         return
 
     # 获取所有有对应标签的图片文件
-    valid_extensions = {'.jpg', '.jpeg', '.png', '.bmp'}
     all_images = []
     
     print("正在扫描并匹配图片和标签文件...")
-    for img_file in src_images_dir.iterdir():
-        if img_file.suffix.lower() in valid_extensions:
+    for img_file in sorted(src_images_dir.iterdir(), key=lambda path: path.name):
+        if img_file.suffix.lower() in VALID_EXTENSIONS:
             # 对应的标签文件名
             label_file = src_labels_dir / (img_file.stem + '.txt')
             if label_file.exists():
@@ -44,8 +158,17 @@ def split_dataset(
         print("未找到任何成对的数据，退出。")
         return
 
-    # 打乱顺序
-    random.shuffle(all_images)
+    if target_total_images is not None and target_total_images > 0 and target_total_images < total_files:
+        all_images = select_balanced_subset(
+            image_names=all_images,
+            src_labels_dir=src_labels_dir,
+            target_total=target_total_images,
+            target_small_ratio=target_small_image_ratio,
+        )
+        total_files = len(all_images)
+        print(f"按受控抽样缩减到 {total_files} 张，目标是提升含小目标样本占比并压缩仅常规船舶样本。")
+    else:
+        random.shuffle(all_images)
     
     # 计算划分的索引
     train_end = int(total_files * ratios[0])
@@ -62,6 +185,8 @@ def split_dataset(
     
     # 创建输出目录结构
     output_dir = base_dir / output_dir_name
+    if output_dir.exists():
+        shutil.rmtree(output_dir)
     sub_dirs = ['train', 'val', 'test']
     
     for folder in ['images', 'labels']:
@@ -87,6 +212,16 @@ def split_dataset(
     copy_files(train_files, 'train')
     copy_files(val_files, 'val')
     copy_files(test_files, 'test')
+
+    noise_count = add_noise_augmented_train_samples(
+        output_dir=output_dir,
+        source_label_dir=src_labels_dir,
+        train_files=train_files,
+        noise_ratio=noise_ratio,
+        max_noise_images=max_noise_images,
+    )
+    if noise_count:
+        print(f"已向 baseline 训练集补充 {noise_count} 张噪声增强样本")
     
     # 生成 YOLO 所需的 yaml 文件
     yaml_path = output_dir / 'ship_dataset.yaml'
@@ -112,12 +247,23 @@ names:
 if __name__ == "__main__":
     import sys
     sys.path.append(str(Path(__file__).resolve().parent.parent))
-    from config import DATA_ORIGINAL_DIR, DATA_BASELINE_DIR
+    from config import (
+        BASELINE_NOISE_AUG_RATIO,
+        BASELINE_NOISE_MAX_IMAGES,
+        BASELINE_TARGET_SMALL_IMAGE_RATIO,
+        BASELINE_TARGET_TOTAL_IMAGES,
+        DATA_ORIGINAL_DIR,
+        DATA_BASELINE_DIR,
+    )
     
     split_dataset(
         dataset_dir=str(DATA_ORIGINAL_DIR),
         images_dir_name="images",
         labels_dir_name="labels_2class",  # 使用我们刚刚生成的2分类标签
         output_dir_name=str(DATA_BASELINE_DIR),   # 指向统一配置中的 baseline 文件夹
-        ratios=(0.7, 0.2, 0.1)            # 按照 7:2:1 划分
+        ratios=(0.7, 0.2, 0.1),           # 按照 7:2:1 划分
+        target_total_images=BASELINE_TARGET_TOTAL_IMAGES,
+        target_small_image_ratio=BASELINE_TARGET_SMALL_IMAGE_RATIO,
+        noise_ratio=BASELINE_NOISE_AUG_RATIO,
+        max_noise_images=BASELINE_NOISE_MAX_IMAGES,
     )

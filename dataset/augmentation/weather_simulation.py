@@ -12,10 +12,11 @@ from dataset.augmentation.augmentation_utils import (
     collect_dataset_label_stats,
     init_augmentation_pool,
     remove_generated_variants,
+    should_skip_generated_file,
     summarize_ratio,
 )
 
-def create_weather_augmented_dataset(enhancement_ratio=0.3):
+def create_weather_augmented_dataset(enhancement_ratio=0.3, max_samples: int | None = None):
     # 仅从 baseline 原图生成天气增强
     src_dir = DATA_BASELINE_DIR
     dst_dir = DATA_AUGMENTATION_DIR
@@ -24,7 +25,7 @@ def create_weather_augmented_dataset(enhancement_ratio=0.3):
         print(f"错误：找不到基线数据集 {src_dir}")
         return
 
-    init_augmentation_pool(src_dir, dst_dir)
+    init_augmentation_pool(src_dir, dst_dir, excluded_suffixes=("_aug_noise",))
 
     print(f"[*] 正在处理训练集池，应用天气增强")
 
@@ -37,24 +38,32 @@ def create_weather_augmented_dataset(enhancement_ratio=0.3):
     if removed_count:
         print(f"[*] 已清理历史天气增强样本 {removed_count} 张，避免旧结果叠加")
     
-    # 模拟海面大雾、海面降雨、夜间/阴天光照不良、和图像噪点
+    # 模拟海面大雾、海面降雨、夜间/阴天光照不良，不在 augmentation 阶段引入噪声
     transform = A.Compose([
         A.OneOf([
-            A.RandomFog(fog_coef_lower=0.08, fog_coef_upper=0.18, alpha_coef=0.06, p=1.0),
+            A.RandomFog(fog_coef_range=(0.08, 0.18), alpha_coef=0.06, p=1.0),
             A.RandomRain(brightness_coefficient=0.95, drop_width=1, blur_value=3, rain_type="drizzle", p=1.0),
             A.RandomBrightnessContrast(brightness_limit=(-0.18, -0.05), contrast_limit=(-0.1, 0.1), p=1.0),
-            A.GaussNoise(std_range=(0.02, 0.05), mean_range=(0.0, 0.0), p=1.0)
         ], p=1.0)
     ])
 
-    src_train_imgs = sorted(src_train_img.glob("*.jpg"))
+    src_train_imgs = sorted(
+        img_path
+        for img_path in src_train_img.glob("*.jpg")
+        if not should_skip_generated_file(img_path.stem, ("_aug_noise",))
+    )
+    if max_samples is not None:
+        target_aug_count = min(max_samples, len(src_train_imgs))
+    else:
+        target_aug_count = int(round(len(src_train_imgs) * enhancement_ratio))
+    target_aug_count = min(target_aug_count, len(src_train_imgs))
+    selected_imgs = set(random.sample(src_train_imgs, target_aug_count)) if target_aug_count > 0 else set()
     aug_count = 0
     
     for img_path in tqdm(src_train_imgs, desc="增强 Train 集"):
         label_path = src_train_lbl / (img_path.stem + ".txt")
             
-        # 按照概率决定是否对这张 baseline 原图进行天气增强
-        if random.random() < enhancement_ratio:
+        if img_path in selected_imgs:
             image = cv2.imread(str(img_path))
             if image is None:
                 continue
