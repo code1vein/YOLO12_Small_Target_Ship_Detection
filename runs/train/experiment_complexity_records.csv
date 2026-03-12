@@ -1,0 +1,2 @@
+run_name,dataset_desc,best_weight,imgsz,params,params_m,flops_g
+exp1_augmentation,增强数据集,H:\YOLO12Detection\YOLO12_SmallTargetShip_Detection\yolo12\runs\train\exp1_augmentation\weights\best.pt,640,20139030,20.139,

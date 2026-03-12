@@ -1,0 +1,9 @@
+{
+  "run_name": "exp1_augmentation",
+  "dataset_desc": "增强数据集",
+  "best_weight": "H:\\YOLO12Detection\\YOLO12_SmallTargetShip_Detection\\yolo12\\runs\\train\\exp1_augmentation\\weights\\best.pt",
+  "imgsz": 640,
+  "params": 20139030,
+  "params_m": 20.139,
+  "flops_g": null
+}
