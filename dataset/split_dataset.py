@@ -66,8 +66,6 @@ def add_noise_augmented_split_samples(
     source_label_dir: Path,
     split_files: list[str],
     split_name: str,
-    noise_ratio: float,
-    max_noise_images: int,
 ) -> int:
     split_image_dir = output_dir / 'images' / split_name
     split_label_dir = output_dir / 'labels' / split_name
@@ -81,13 +79,13 @@ def add_noise_augmented_split_samples(
         else:
             normal_only.append(img_name)
 
-    target_noise_count = min(max_noise_images, int(round(len(split_files) * noise_ratio)))
     candidate_files = small_first + normal_only
-    target_noise_count = min(target_noise_count, len(candidate_files))
-    if target_noise_count <= 0:
+    # 按当前实验需求：对该划分中的所有图片都进行加噪并覆盖原图
+    target_noise_count = len(candidate_files)
+    if target_noise_count == 0:
         return 0
 
-    selected_for_noise = candidate_files[:target_noise_count]
+    selected_for_noise = candidate_files
     noise_transform = A.Compose([
         A.OneOf([
             A.GaussNoise(std_range=(0.04, 0.10), mean_range=(0.0, 0.0), p=1.0),
@@ -123,8 +121,6 @@ def split_dataset(
     seed: int = 42,
     target_total_images: int | None = None,
     target_small_image_ratio: float = 0.5,
-    noise_ratio: float = 0.0,
-    max_noise_images: int = 0,
 ):
     """
     将数据集划分为 train, val, test 集 （7:2:1）
@@ -217,8 +213,6 @@ def split_dataset(
         source_label_dir=src_labels_dir,
         split_files=test_files,
         split_name='test',
-        noise_ratio=noise_ratio,
-        max_noise_images=max_noise_images,
     )
     if noise_count:
         print(f"已向 baseline 测试集补充 {noise_count} 张噪声增强样本")
@@ -248,8 +242,6 @@ if __name__ == "__main__":
     import sys
     sys.path.append(str(Path(__file__).resolve().parent.parent))
     from config import (
-        BASELINE_NOISE_AUG_RATIO,
-        BASELINE_NOISE_MAX_IMAGES,
         BASELINE_TARGET_SMALL_IMAGE_RATIO,
         BASELINE_TARGET_TOTAL_IMAGES,
         DATA_ORIGINAL_DIR,
@@ -264,6 +256,4 @@ if __name__ == "__main__":
         ratios=(0.7, 0.2, 0.1),           # 按照 7:2:1 划分
         target_total_images=BASELINE_TARGET_TOTAL_IMAGES,
         target_small_image_ratio=BASELINE_TARGET_SMALL_IMAGE_RATIO,
-        noise_ratio=BASELINE_NOISE_AUG_RATIO,
-        max_noise_images=BASELINE_NOISE_MAX_IMAGES,
     )
