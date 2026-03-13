@@ -61,26 +61,27 @@ def select_balanced_subset(
     return selected
 
 
-def add_noise_augmented_train_samples(
+def add_noise_augmented_split_samples(
     output_dir: Path,
     source_label_dir: Path,
-    train_files: list[str],
+    split_files: list[str],
+    split_name: str,
     noise_ratio: float,
     max_noise_images: int,
 ) -> int:
-    train_image_dir = output_dir / 'images' / 'train'
-    train_label_dir = output_dir / 'labels' / 'train'
+    split_image_dir = output_dir / 'images' / split_name
+    split_label_dir = output_dir / 'labels' / split_name
 
     small_first = []
     normal_only = []
-    for img_name in train_files:
+    for img_name in split_files:
         label_path = source_label_dir / f"{Path(img_name).stem}.txt"
         if label_has_small_target(label_path):
             small_first.append(img_name)
         else:
             normal_only.append(img_name)
 
-    target_noise_count = min(max_noise_images, int(round(len(train_files) * noise_ratio)))
+    target_noise_count = min(max_noise_images, int(round(len(split_files) * noise_ratio)))
     candidate_files = small_first + normal_only
     target_noise_count = min(target_noise_count, len(candidate_files))
     if target_noise_count <= 0:
@@ -89,16 +90,16 @@ def add_noise_augmented_train_samples(
     selected_for_noise = candidate_files[:target_noise_count]
     noise_transform = A.Compose([
         A.OneOf([
-            A.GaussNoise(std_range=(0.02, 0.06), mean_range=(0.0, 0.0), p=1.0),
-            A.ISONoise(color_shift=(0.01, 0.05), intensity=(0.1, 0.4), p=1.0),
-            A.MultiplicativeNoise(multiplier=(0.92, 1.08), elementwise=True, p=1.0),
+            A.GaussNoise(std_range=(0.04, 0.10), mean_range=(0.0, 0.0), p=1.0),
+            A.ISONoise(color_shift=(0.02, 0.08), intensity=(0.25, 0.65), p=1.0),
+            A.MultiplicativeNoise(multiplier=(0.85, 1.15), elementwise=True, p=1.0),
         ], p=1.0)
     ])
 
     generated_count = 0
-    for img_name in tqdm(selected_for_noise, desc='生成 baseline 噪声样本'):
-        image_path = train_image_dir / img_name
-        label_path = train_label_dir / f"{Path(img_name).stem}.txt"
+    for img_name in tqdm(selected_for_noise, desc=f'生成 {split_name} 噪声样本'):
+        image_path = split_image_dir / img_name
+        label_path = split_label_dir / f"{Path(img_name).stem}.txt"
         image = cv2.imread(str(image_path))
         if image is None or not label_path.exists():
             continue
@@ -107,10 +108,8 @@ def add_noise_augmented_train_samples(
         noise_image = noise_transform(image=rgb_image)["image"]
         output_image = cv2.cvtColor(noise_image, cv2.COLOR_RGB2BGR)
 
-        noise_image_name = f"{Path(img_name).stem}_aug_noise{Path(img_name).suffix}"
-        noise_label_name = f"{Path(img_name).stem}_aug_noise.txt"
-        cv2.imwrite(str(train_image_dir / noise_image_name), output_image)
-        shutil.copy2(label_path, train_label_dir / noise_label_name)
+        # 直接覆盖原图，保持文件名不变
+        cv2.imwrite(str(image_path), output_image)
         generated_count += 1
 
     return generated_count
@@ -213,15 +212,16 @@ def split_dataset(
     copy_files(val_files, 'val')
     copy_files(test_files, 'test')
 
-    noise_count = add_noise_augmented_train_samples(
+    noise_count = add_noise_augmented_split_samples(
         output_dir=output_dir,
         source_label_dir=src_labels_dir,
-        train_files=train_files,
+        split_files=test_files,
+        split_name='test',
         noise_ratio=noise_ratio,
         max_noise_images=max_noise_images,
     )
     if noise_count:
-        print(f"已向 baseline 训练集补充 {noise_count} 张噪声增强样本")
+        print(f"已向 baseline 测试集补充 {noise_count} 张噪声增强样本")
     
     # 生成 YOLO 所需的 yaml 文件
     yaml_path = output_dir / 'ship_dataset.yaml'
