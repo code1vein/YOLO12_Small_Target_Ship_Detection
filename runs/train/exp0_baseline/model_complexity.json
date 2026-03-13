@@ -1,0 +1,9 @@
+{
+  "run_name": "exp0_baseline",
+  "dataset_desc": "基线数据集",
+  "best_weight": "H:\\YOLO12Detection\\YOLO12_SmallTargetShip_Detection\\yolo12\\runs\\train\\exp0_baseline\\weights\\best.pt",
+  "imgsz": 640,
+  "params": 20139030,
+  "params_m": 20.139,
+  "flops_g": null
+}
