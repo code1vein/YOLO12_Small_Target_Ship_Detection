@@ -3,13 +3,13 @@ from pathlib import Path
 
 # 动态加载根目录的统一配置
 sys.path.append(str(Path(__file__).resolve().parent.parent))
-from config import AUGMENTATION_YAML_PATH, YOLO5_MODEL
+from config import BASELINE_YAML_PATH, YOLO5_MODEL
 from train_config import train_model
 
 
 def main():
     train_model(
-        AUGMENTATION_YAML_PATH,
+        BASELINE_YAML_PATH,
         YOLO5_MODEL,
         'exp7_yolov5_augmentation',
         'YOLOv5 增强数据集对比实验组',

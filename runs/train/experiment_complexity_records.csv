@@ -1,3 +1,11 @@
 run_name,dataset_desc,best_weight,imgsz,params,params_m,flops_g
 exp0_baseline,基线数据集,H:\YOLO12Detection\YOLO12_SmallTargetShip_Detection\yolo12\runs\train\exp0_baseline\weights\best.pt,640,20139030,20.139,
 exp1_augmentation,增强数据集,H:\YOLO12Detection\YOLO12_SmallTargetShip_Detection\yolo12\runs\train\exp1_augmentation\weights\best.pt,640,20139030,20.139,
+exp2_yolo12_m2_p2,YOLO12 消融 M2 P2 检测头组,H:\YOLO12Detection\YOLO12_SmallTargetShip_Detection\yolo12\runs\train\exp2_yolo12_m2_p2\weights\best.pt,640,20635352,20.6354,
+exp3_yolo12_m3_spd,YOLO12 消融 M3 SPD 风格下采样组,H:\YOLO12Detection\YOLO12_SmallTargetShip_Detection\yolo12\runs\train\exp3_yolo12_m3_spd\weights\best.pt,640,22129686,22.1297,
+exp4_yolo12_m4_neck,YOLO12 消融 M4 增强 Neck 组,H:\YOLO12Detection\YOLO12_SmallTargetShip_Detection\yolo12\runs\train\exp4_yolo12_m4_neck\weights\best.pt,640,22389782,22.3898,
+exp5_yolo12_m5_p2_spd,YOLO12 消融 M5 P2 + SPD 风格下采样组,H:\YOLO12Detection\YOLO12_SmallTargetShip_Detection\yolo12\runs\train\exp5_yolo12_m5_p2_spd\weights\best.pt,640,22626008,22.626,
+exp6_yolo12_m6_p2_spd_neck,YOLO12 消融 M6 P2 + SPD 风格下采样 + 增强 Neck 组,H:\YOLO12Detection\YOLO12_SmallTargetShip_Detection\yolo12\runs\train\exp6_yolo12_m6_p2_spd_neck\weights\best.pt,640,29525976,29.526,
+exp7_yolov5_augmentation,YOLOv5 增强数据集对比实验组,H:\YOLO12Detection\YOLO12_SmallTargetShip_Detection\yolo12\runs\train\exp7_yolov5_augmentation\weights\best.pt,640,25066294,25.0663,
+exp8_yolov8_augmentation,YOLOv8 增强数据集对比实验组,H:\YOLO12Detection\YOLO12_SmallTargetShip_Detection\yolo12\runs\train\exp8_yolov8_augmentation\weights\best.pt,640,25857478,25.8575,
+exp9_yolov11_augmentation,YOLOv11 增强数据集对比实验组,H:\YOLO12Detection\YOLO12_SmallTargetShip_Detection\yolo12\runs\train\exp9_yolov11_augmentation\weights\best.pt,640,20054550,20.0545,

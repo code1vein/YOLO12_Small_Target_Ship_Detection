@@ -1,0 +1,9 @@
+{
+  "run_name": "exp7_yolov5_augmentation",
+  "dataset_desc": "YOLOv5 增强数据集对比实验组",
+  "best_weight": "H:\\YOLO12Detection\\YOLO12_SmallTargetShip_Detection\\yolo12\\runs\\train\\exp7_yolov5_augmentation\\weights\\best.pt",
+  "imgsz": 640,
+  "params": 25066294,
+  "params_m": 25.0663,
+  "flops_g": null
+}

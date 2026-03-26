@@ -112,7 +112,7 @@ def train_model(dataset_yaml, model_name, run_name, dataset_desc, model_cfg=None
         data=str(dataset_yaml),              
         epochs=150,                          
         imgsz=IMG_SIZE,                      
-        batch=10,                            # 每个迭代的样本数
+        batch=16,                            # 每个迭代的样本数
         workers=8,                           # 数据加载线程数
         device=0,                            
 

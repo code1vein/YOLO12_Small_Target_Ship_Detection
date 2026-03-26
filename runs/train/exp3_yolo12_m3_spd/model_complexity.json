@@ -1,0 +1,9 @@
+{
+  "run_name": "exp3_yolo12_m3_spd",
+  "dataset_desc": "YOLO12 消融 M3 SPD 风格下采样组",
+  "best_weight": "H:\\YOLO12Detection\\YOLO12_SmallTargetShip_Detection\\yolo12\\runs\\train\\exp3_yolo12_m3_spd\\weights\\best.pt",
+  "imgsz": 640,
+  "params": 22129686,
+  "params_m": 22.1297,
+  "flops_g": null
+}

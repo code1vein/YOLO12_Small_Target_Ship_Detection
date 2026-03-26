@@ -1,0 +1,9 @@
+{
+  "run_name": "exp2_yolo12_m2_p2",
+  "dataset_desc": "YOLO12 消融 M2 P2 检测头组",
+  "best_weight": "H:\\YOLO12Detection\\YOLO12_SmallTargetShip_Detection\\yolo12\\runs\\train\\exp2_yolo12_m2_p2\\weights\\best.pt",
+  "imgsz": 640,
+  "params": 20635352,
+  "params_m": 20.6354,
+  "flops_g": null
+}

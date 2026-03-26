@@ -1,0 +1,9 @@
+{
+  "run_name": "exp6_yolo12_m6_p2_spd_neck",
+  "dataset_desc": "YOLO12 消融 M6 P2 + SPD 风格下采样 + 增强 Neck 组",
+  "best_weight": "H:\\YOLO12Detection\\YOLO12_SmallTargetShip_Detection\\yolo12\\runs\\train\\exp6_yolo12_m6_p2_spd_neck\\weights\\best.pt",
+  "imgsz": 640,
+  "params": 29525976,
+  "params_m": 29.526,
+  "flops_g": null
+}

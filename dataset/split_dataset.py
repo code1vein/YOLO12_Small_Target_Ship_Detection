@@ -88,9 +88,9 @@ def add_noise_augmented_split_samples(
     selected_for_noise = candidate_files
     noise_transform = A.Compose([
         A.OneOf([
-            A.GaussNoise(std_range=(0.04, 0.10), mean_range=(0.0, 0.0), p=1.0),
-            A.ISONoise(color_shift=(0.02, 0.08), intensity=(0.25, 0.65), p=1.0),
-            A.MultiplicativeNoise(multiplier=(0.85, 1.15), elementwise=True, p=1.0),
+            A.GaussNoise(std_range=(0.16, 0.21), mean_range=(0.0, 0.0), p=1.0),
+            A.ISONoise(color_shift=(0.16, 0.21), intensity=(0.25, 0.65), p=1.0),
+            A.MultiplicativeNoise(multiplier=(1.25, 1.65), elementwise=True, p=1.0),
         ], p=1.0)
     ])
 

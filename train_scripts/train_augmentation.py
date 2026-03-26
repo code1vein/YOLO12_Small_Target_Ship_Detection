@@ -3,11 +3,11 @@ from pathlib import Path
 
 # 动态加载根目录的统一配置
 sys.path.append(str(Path(__file__).resolve().parent.parent))
-from config import AUGMENTATION_YAML_PATH, YOLO12_MODEL
+from config import BASELINE_YAML_PATH, YOLO12_MODEL
 from train_config import train_model
 
 def main():
-    train_model(AUGMENTATION_YAML_PATH, YOLO12_MODEL, 'exp1_augmentation', '增强数据集')
+    train_model(BASELINE_YAML_PATH, YOLO12_MODEL, 'exp1_augmentation', '增强数据集')
 
 
 if __name__ == '__main__':

@@ -1,0 +1,9 @@
+{
+  "run_name": "exp4_yolo12_m4_neck",
+  "dataset_desc": "YOLO12 消融 M4 增强 Neck 组",
+  "best_weight": "H:\\YOLO12Detection\\YOLO12_SmallTargetShip_Detection\\yolo12\\runs\\train\\exp4_yolo12_m4_neck\\weights\\best.pt",
+  "imgsz": 640,
+  "params": 22389782,
+  "params_m": 22.3898,
+  "flops_g": null
+}
