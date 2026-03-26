@@ -1,4 +1,3 @@
-import os
 import sys
 import random
 import cv2
@@ -25,7 +24,7 @@ from dataset.augmentation.augmentation_utils import (
 )
 
 def iou(box1, box2):
-    """计算两个绝对坐标[x1, y1, x2, y2]的IoU来防止粘贴重叠"""
+    # 计算两个绝对坐标[x1, y1, x2, y2]的IoU来防止粘贴重叠
     x_left = max(box1[0], box2[0])
     y_top = max(box1[1], box2[1])
     x_right = min(box1[2], box2[2])
@@ -41,7 +40,7 @@ def iou(box1, box2):
     return iou_val
 
 def extract_small_ships_catalog(train_img_dir, train_lbl_dir):
-    """提取所有类别为小目标的候选框信息"""
+    # 提取所有类别为小目标的候选框信息
     catalog = []
     print("正在扫描基线数据集，构建小目标候选库")
     for lbl_path in sorted(train_lbl_dir.glob("*.txt"), key=lambda path: path.name):

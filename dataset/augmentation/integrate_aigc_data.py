@@ -1,4 +1,3 @@
-import os
 import sys
 import json
 import shutil
@@ -113,6 +112,7 @@ def convert_labelme_to_yolo(json_path, img_width, img_height):
 
 # 主执行流：匹配、重命名并整合到集大成池
 def main(max_samples: int | None = None, seed: int = 42):
+    # 先同步 baseline 到增强池，再将 AIGC 数据按统一规则增量并入 train 集
     init_augmentation_pool(DATA_BASELINE_DIR, DATA_AUGMENTATION_DIR)
 
     # 所有 AIGC 样本统一落到增强训练集的 train 子集

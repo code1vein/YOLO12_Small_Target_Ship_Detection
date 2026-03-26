@@ -1,4 +1,3 @@
-import os
 import sys
 import json
 from pathlib import Path
@@ -9,6 +8,7 @@ sys.path.append(str(Path(__file__).resolve().parent.parent))
 from config import DATA_ORIGINAL_DIR, ORIGINAL_IMAGES_DIR, ORIGINAL_LABELS_DIR, ORIGINAL_LABELS_2CLASS_DIR
 
 def rename_dataset_in_place():
+    # 按类别前缀原地重命名图片与标签，并导出映射关系用于溯源
     src_images_dir = ORIGINAL_IMAGES_DIR
     src_labels_2class_dir = ORIGINAL_LABELS_2CLASS_DIR
     src_labels_orig_dir = ORIGINAL_LABELS_DIR
@@ -87,7 +87,7 @@ def rename_dataset_in_place():
         
         mapping_record[img_path.name] = (new_stem + img_path.suffix)
 
-    print(f"准备执行原地重命名，总计进行 {len(rename_tasks)} 次文件操作")
+    print(f"准备执行重命名，总计进行 {len(rename_tasks)} 次文件操作")
     
     # 执行重命名
     for old_path, new_path in tqdm(rename_tasks, desc="重命名中"):
@@ -100,7 +100,7 @@ def rename_dataset_in_place():
         json.dump(mapping_record, f, indent=4, ensure_ascii=False)
         
     print("\n" + "="*40)
-    print("原地重命名完成")
+    print("重命名完成")
     print("重命名数据统计：")
     print(f"  - 纯常规船 (Normal_Ship)       : {counters['Normal_Ship']} 张")
     print(f"  - 纯小目标 (Small_Target_Ship) : {counters['Small_Target_Ship']} 张")
