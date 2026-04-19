@@ -61,7 +61,7 @@ def extract_small_ships_catalog(train_img_dir, train_lbl_dir):
 
 
 def expand_crop_region(x1, y1, x2, y2, img_w, img_h, context_ratio=0.25):
-    # 给裁剪框补一点上下文，避免只截到目标本体导致边缘生硬
+    # 给裁剪框补一点上下文边界
     box_w = x2 - x1
     box_h = y2 - y1
     pad_x = max(2, int(box_w * context_ratio))
@@ -74,7 +74,7 @@ def expand_crop_region(x1, y1, x2, y2, img_w, img_h, context_ratio=0.25):
 
 
 def create_soft_mask(height, width, box, feather_ratio=0.35):
-    # 通过高斯模糊得到软边 mask，减轻硬粘贴痕迹
+    # 通过高斯模糊得到软边 mask
     mask = np.zeros((height, width), dtype=np.float32)
     x1, y1, x2, y2 = box
     mask[y1:y2, x1:x2] = 1.0
@@ -84,7 +84,7 @@ def create_soft_mask(height, width, box, feather_ratio=0.35):
 
 
 def paste_with_alpha(base_img, patch, alpha_mask, patch_x1, patch_y1):
-    # 用 alpha 混合替代直接覆盖，尽量保持海面过渡自然
+    # 用 alpha 混合替代直接覆盖
     patch_h, patch_w = patch.shape[:2]
     roi = base_img[patch_y1:patch_y1 + patch_h, patch_x1:patch_x1 + patch_w].astype(np.float32)
     patch_float = patch.astype(np.float32)
@@ -162,7 +162,6 @@ def create_copypaste_dataset(
     target_small_ratio=COPYPASTE_TARGET_SMALL_RATIO,
     max_samples: int | None = None,
 ):
-    #基于 baseline 原图做 Copy-Paste，通过分布和质量约束抑制脏样本
     src_dir = DATA_BASELINE_DIR
     dst_dir = DATA_AUGMENTATION_DIR
     
@@ -178,7 +177,6 @@ def create_copypaste_dataset(
     dst_train_img = dst_dir / "images" / "train"
     dst_train_lbl = dst_dir / "labels" / "train"
 
-    # 仅清理本脚本生成过的副本，保留基线底座和其他增强结果
     removed_count = remove_generated_variants(dst_train_img, dst_train_lbl, "_copypaste")
     if removed_count:
         print(f"[*] 已清理历史 Copy-Paste 样本 {removed_count} 张，避免脏样本残留")

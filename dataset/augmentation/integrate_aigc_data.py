@@ -171,7 +171,6 @@ def main(max_samples: int | None = None, seed: int = 42):
             corrected_label_total += convert_stats["corrected_label_count"]
             normalized_label_total += convert_stats["normalized_label_count"]
 
-            # 输出修正后的 LabelMe JSON，便于对照检查自动纠正结果
             corrected_json_path = AIGC_CORRECTED_LABELS_DIR / json_path.name
             with open(corrected_json_path, 'w', encoding='utf-8') as corrected_file:
                 json.dump(convert_stats["corrected_data"], corrected_file, ensure_ascii=False, indent=2)

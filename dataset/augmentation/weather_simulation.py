@@ -38,7 +38,7 @@ def create_weather_augmented_dataset(enhancement_ratio=0.3, max_samples: int | N
     if removed_count:
         print(f"[*] 已清理历史天气增强样本 {removed_count} 张，避免旧结果叠加")
     
-    # 模拟海面大雾、海面降雨、夜间/阴天光照不良，不在 augmentation 阶段引入噪声
+    # 模拟海面大雾、海面降雨、夜间/阴天光照不良
     transform = A.Compose([
         A.OneOf([
             A.RandomFog(fog_coef_range=(0.08, 0.18), alpha_coef=0.06, p=1.0),

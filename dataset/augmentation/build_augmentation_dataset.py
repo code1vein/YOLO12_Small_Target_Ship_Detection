@@ -25,7 +25,7 @@ from dataset.augmentation.integrate_aigc_data import main as integrate_aigc_data
 from dataset.augmentation.weather_simulation import create_weather_augmented_dataset
 
 
-# 统一串联天气增强、Copy-Paste 和 AIGC 整合三个阶段
+# 串联天气增强、Copy-Paste和AIGC
 def build_augmentation_dataset(
     weather_ratio: float = 0.3,
     copypaste_ratio: float = 0.2,
@@ -66,14 +66,14 @@ def build_augmentation_dataset(
     print(f"  - AIGC 预算: {aigc_budget}")
     print("=" * 60)
 
-    # 第一步：从 baseline 原图生成天气扰动样本
+    # 从 baseline 原图生成天气扰动样本
     print("\n[1/3] 构建天气增强样本")
     create_weather_augmented_dataset(
         enhancement_ratio=weather_ratio,
         max_samples=weather_budget,
     )
 
-    # 第二步：继续向增强池补充受控的 Copy-Paste 样本
+    # 向增强池补充受控的 Copy-Paste 样本
     print("\n[2/3] 构建 Copy-Paste 样本")
     create_copypaste_dataset(
         augment_ratio=copypaste_ratio,
@@ -82,11 +82,11 @@ def build_augmentation_dataset(
         max_samples=copypaste_budget,
     )
 
-    # 第三步：将 AIGC 样本转成 YOLO 格式后并入增强池
+    # 将 AIGC 样本转成 YOLO 格式后并入增强池
     print("\n[3/3] 整合 AIGC 样本")
     integrate_aigc_data(max_samples=aigc_budget, seed=seed)
 
-    # 最后统计增强训练集整体标签分布，便于检查是否偏移过大
+    # 统计增强训练集整体标签分布
     label_dir = DATA_AUGMENTATION_DIR / "labels" / "train"
     file_count, normal_count, small_count = collect_dataset_label_stats(label_dir)
     print("\n" + "=" * 60)
